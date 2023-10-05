@@ -28,11 +28,9 @@ public class TestMain {
         ConsoleDigitalAdapter dtAdapter = new ConsoleDigitalAdapter();
         dt.addDigitalAdapter(dtAdapter);
 
-        MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder("127.0.0.1", 1883)
-                .addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt)
+        MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder("config.yml")
+                .readFromConfig()
                 .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
-                .addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity())
-                .addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody)
                 .build();
 
 //                .addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt)
