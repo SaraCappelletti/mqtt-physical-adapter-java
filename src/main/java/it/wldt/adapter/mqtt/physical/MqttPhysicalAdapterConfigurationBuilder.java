@@ -36,6 +36,13 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         configuration = new MqttPhysicalAdapterConfiguration(brokerAddress, brokerPort);
     }
 
+    public MqttPhysicalAdapterConfigurationBuilder(String filename) throws MqttPhysicalAdapterConfigurationException {
+        /*if(!isValid(brokerAddress) || !isValid(brokerPort))
+            throw new MqttPhysicalAdapterConfigurationException("Broker Address cannot be empty strings or null and Broker Port must be a positive number");
+        */
+        configuration = new MqttPhysicalAdapterConfiguration("127.0.0.1", 1883);
+    }
+
     public <T> MqttPhysicalAdapterConfigurationBuilder addPhysicalAssetPropertyAndTopic(String propertyKey, T initialValue, String topic, Function<String, T> topicFunction) throws MqttPhysicalAdapterConfigurationException {
         checkTopicAndFunction(topic, topicFunction, this.configuration.getIncomingTopics().stream().map(MqttTopic::getTopic).collect(Collectors.toList()));
         configuration.addIncomingTopic(new PropertyIncomingTopic<>(topic, propertyKey, topicFunction));
@@ -136,5 +143,13 @@ public class MqttPhysicalAdapterConfigurationBuilder {
 
     private boolean isValid(int param){
         return param > 0;
+    }
+
+    public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException {
+        addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody);
+        addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
+        addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity());
+
+        return this;
     }
 }

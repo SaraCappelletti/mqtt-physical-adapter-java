@@ -50,8 +50,8 @@ public class MqttPhysicalAdapterConfiguration {
         return new MqttPhysicalAdapterConfigurationBuilder(brokerAddress, brokerPort);
     }
 
-    public static MqttPhysicalAdapterBuilder builder(String filename) throws MqttPhysicalAdapterConfigurationException {
-        return new MqttPhysicalAdapterBuilder(filename);
+    public static MqttPhysicalAdapterConfigurationBuilder builder(String filename) throws MqttPhysicalAdapterConfigurationException {
+        return new  MqttPhysicalAdapterConfigurationBuilder(filename);
     }
 
     public String getBrokerAddress() {
