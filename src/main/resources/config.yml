@@ -3,5 +3,5 @@ brokerPort: 1883
 paProperties:
   - propertyKey: "intensity"
     topic: "sensor/intensity"
-    type: "int"
-    initialValue: 3
+    type: "boolean"
+    initialValue: True

@@ -2,7 +2,10 @@ package it.wldt.adapter.mqtt.physical;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.adapter.mqtt.physical.topic.MqttTopic;
@@ -188,7 +191,8 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             String propertyKey = p.get("propertyKey").asText();
             T initialValue = (T) parseField(p.get("initialValue")).apply(p.get("initialValue").asText());
             String topic = p.get("topic").asText();
-
+            System.out.println(initialValue);
+            //TODO i'm ignoring type field
             addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, parseField(p.get("initialValue")));
         }
     }
@@ -198,7 +202,16 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             if (field instanceof IntNode) {
                 return (T) Integer.valueOf(field.asInt());
             }
-            return null;//Function.identity();
+            else if (field instanceof DoubleNode) {
+                return (T) Double.valueOf(field.asDouble());
+            }
+            else if (field instanceof TextNode) {
+                return (T) String.valueOf(field.asText());
+            }
+            else if (field instanceof BooleanNode) {
+                return (T) Boolean.valueOf(field.asBoolean());
+            }
+                return null;//Function.identity();
             /*return jsonNode -> {
             if (field != null) {
                 System.out.println("int2");
