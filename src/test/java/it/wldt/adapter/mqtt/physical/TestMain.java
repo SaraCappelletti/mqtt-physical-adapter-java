@@ -31,7 +31,7 @@ public class TestMain {
 
         String filepath = "src/main/resources/config.yml";
         MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder(filepath)
-                .readFromConfig(filepath)
+                .readFromConfig()
                 .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
                 .build();
 

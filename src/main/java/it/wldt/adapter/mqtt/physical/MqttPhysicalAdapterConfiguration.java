@@ -56,15 +56,10 @@ public class MqttPhysicalAdapterConfiguration {
         return new MqttPhysicalAdapterConfigurationBuilder(brokerAddress, brokerPort);
     }
 
-    public static MqttPhysicalAdapterConfigurationBuilder builder(String filepath) throws MqttPhysicalAdapterConfigurationException {
+    public static MqttPhysicalAdapterConfigurationBuilder builder(String filepath) throws MqttPhysicalAdapterConfigurationException, IOException {
         ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = yamlMapper.readTree(new File(filepath));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return new  MqttPhysicalAdapterConfigurationBuilder(jsonNode.get("brokerAddress").asText(), jsonNode.get("brokerPort").asInt());
+        JsonNode jsonNode = yamlMapper.readTree(new File(filepath));
+        return new  MqttPhysicalAdapterConfigurationBuilder(jsonNode);
     }
 
     public String getBrokerAddress() {

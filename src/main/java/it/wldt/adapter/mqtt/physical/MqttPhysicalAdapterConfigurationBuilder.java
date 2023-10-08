@@ -16,37 +16,45 @@ import it.wldt.adapter.physical.PhysicalAssetEvent;
 import it.wldt.adapter.physical.PhysicalAssetProperty;
 import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MqttPhysicalAdapterConfigurationBuilder {
 
     private final MqttPhysicalAdapterConfiguration configuration;
+    private JsonNode configFileContent;
     private final List<PhysicalAssetProperty<?>> properties = new ArrayList<>();
     private final List<PhysicalAssetEvent> events = new ArrayList<>();
     private final List<PhysicalAssetAction> actions = new ArrayList<>();
+
+
 
     public MqttPhysicalAdapterConfigurationBuilder(String brokerAddress, int brokerPort, String clientId) throws MqttPhysicalAdapterConfigurationException {
         if(!isValid(brokerAddress) || !isValid(brokerPort) || !isValid(clientId))
             throw new MqttPhysicalAdapterConfigurationException("Broker Address or Client Id cannot be empty strings or null and Broker Port must be a positive number");
         configuration = new MqttPhysicalAdapterConfiguration(brokerAddress, brokerPort, clientId);
+        //configFileContent = null;
     }
 
     public MqttPhysicalAdapterConfigurationBuilder(String brokerAddress, int brokerPort) throws MqttPhysicalAdapterConfigurationException {
         if(!isValid(brokerAddress) || !isValid(brokerPort))
             throw new MqttPhysicalAdapterConfigurationException("Broker Address cannot be empty strings or null and Broker Port must be a positive number");
         configuration = new MqttPhysicalAdapterConfiguration(brokerAddress, brokerPort);
+        //configFileContent = null;
     }
 
-    public MqttPhysicalAdapterConfigurationBuilder(String filename) throws MqttPhysicalAdapterConfigurationException {
+    public MqttPhysicalAdapterConfigurationBuilder(JsonNode fileContent) throws MqttPhysicalAdapterConfigurationException, IOException {
         /*if(!isValid(brokerAddress) || !isValid(brokerPort))
             throw new MqttPhysicalAdapterConfigurationException("Broker Address cannot be empty strings or null and Broker Port must be a positive number");
         */
-        configuration = new MqttPhysicalAdapterConfiguration("127.0.0.1", 1883);
+        configFileContent = fileContent;
+        configuration = new MqttPhysicalAdapterConfiguration(getBrokerAddress(), getBrokerPort());
     }
 
     public <T> MqttPhysicalAdapterConfigurationBuilder addPhysicalAssetPropertyAndTopic(String propertyKey, T initialValue, String topic, Function<String, T> topicFunction) throws MqttPhysicalAdapterConfigurationException {
@@ -151,11 +159,21 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         return param > 0;
     }
 
-    public MqttPhysicalAdapterConfigurationBuilder readFromConfig(String filepath) throws MqttPhysicalAdapterConfigurationException, IOException {
+    /*private static JsonNode readConfigFile(String filepath) throws IOException {
         ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
-        JsonNode jsonNode = yamlMapper.readTree(new File(filepath));
+        return yamlMapper.readTree(new File(filepath));
+    }*/
 
-        addProperties(jsonNode.get("paProperties"));
+    private String getBrokerAddress() {
+        return configFileContent.get("brokerAddress").asText();
+    }
+
+    private int getBrokerPort() {
+        return configFileContent.get("brokerPort").asInt();
+    }
+
+    public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException, IOException {
+        addProperties(configFileContent.get("paProperties"));
 
         addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody);
         //addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
@@ -165,24 +183,15 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         return this;
     }
 
-    private void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
+    private <T> void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
         for (JsonNode p :properties) {
             String propertyKey = p.get("propertyKey").asText();
-            int initialValue = p.get("initialValue").asInt();
+            T initialValue = (T) parseField(p.get("initialValue")).apply(p.get("initialValue").asText());
             String topic = p.get("topic").asText();
+
             addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, parseField(p.get("initialValue")));
         }
-        //for (JsonNode p :properties) {
-            //System.out.println(p.get("type"));
-        //String prop = properties.get("propertyKey").asText();
-        //addPhysicalAssetPropertyAndTopic(prop, 0, "sensor/intensity", Integer::parseInt);
-
-        //}
     }
-
-    /*private <T> Function<String, T> getTopicFunction(JsonNode initialValue)){
-        return Integer::parseInt;
-    }*/
 
     public <T> Function<String, T> parseField(JsonNode field) {
         return String -> {
@@ -209,4 +218,5 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         };*/
         };
     }
+
 }

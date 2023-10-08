@@ -4,4 +4,4 @@ paProperties:
   - propertyKey: "intensity"
     topic: "sensor/intensity"
     type: "int"
-    initialValue: 0
+    initialValue: 3
