@@ -199,9 +199,6 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             if (field instanceof IntNode) {
                 return (T) Integer.valueOf(field.asInt());
             }
-            else if (field instanceof DoubleNode) {
-                return (T) Double.valueOf(field.asDouble());
-            }
             else if (field instanceof TextNode) {
                 return (T) String.valueOf(field.asText());
             }
@@ -211,7 +208,7 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             else if (field instanceof FloatNode) {
                 return (T) Float.valueOf((float) field.asDouble());
             }
-                return null;//Function.identity();
+                return (T) Function.identity();
             /*return jsonNode -> {
             if (field != null) {
                 System.out.println("int2");
