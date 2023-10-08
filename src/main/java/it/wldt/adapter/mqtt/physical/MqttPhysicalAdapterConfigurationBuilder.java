@@ -2,10 +2,7 @@ package it.wldt.adapter.mqtt.physical;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.adapter.mqtt.physical.topic.MqttTopic;
@@ -210,6 +207,9 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             }
             else if (field instanceof BooleanNode) {
                 return (T) Boolean.valueOf(field.asBoolean());
+            }
+            else if (field instanceof FloatNode) {
+                return (T) Float.valueOf((float) field.asDouble());
             }
                 return null;//Function.identity();
             /*return jsonNode -> {
