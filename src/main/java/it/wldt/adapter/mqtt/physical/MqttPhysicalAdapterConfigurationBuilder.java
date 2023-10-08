@@ -1,5 +1,9 @@
 package it.wldt.adapter.mqtt.physical;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.adapter.mqtt.physical.topic.MqttTopic;
 import it.wldt.adapter.mqtt.physical.topic.incoming.DigitalTwinIncomingTopic;
@@ -12,6 +16,8 @@ import it.wldt.adapter.physical.PhysicalAssetEvent;
 import it.wldt.adapter.physical.PhysicalAssetProperty;
 import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -50,7 +56,7 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     }
 
     public <T> MqttPhysicalAdapterConfigurationBuilder addPhysicalAssetActionAndTopic(String actionKey, String type, String contentType,
-                                                   String topic, Function<T, String> topicFunction) throws MqttPhysicalAdapterConfigurationException {
+                                                                                      String topic, Function<T, String> topicFunction) throws MqttPhysicalAdapterConfigurationException {
         checkTopicAndFunction(topic, topicFunction, this.configuration.getOutgoingTopics().values().stream().map(MqttTopic::getTopic).collect(Collectors.toList()));
         configuration.addOutgoingTopic(actionKey, new ActionOutgoingTopic<>(topic, topicFunction));
         return addPhysicalAssetAction(actionKey, type, contentType);
@@ -91,7 +97,7 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     }
 
     private MqttPhysicalAdapterConfigurationBuilder addPhysicalAssetEvent(String key, String type){
-       this.events.add(new PhysicalAssetEvent(key, type));
+        this.events.add(new PhysicalAssetEvent(key, type));
         return this;
     }
 
@@ -145,11 +151,62 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         return param > 0;
     }
 
-    public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException {
+    public MqttPhysicalAdapterConfigurationBuilder readFromConfig(String filepath) throws MqttPhysicalAdapterConfigurationException, IOException {
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode jsonNode = yamlMapper.readTree(new File(filepath));
+
+        addProperties(jsonNode.get("paProperties"));
+
         addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody);
-        addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
+        //addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
+        //String propertyKey, T initialValue, String topic, Function<String, T> topicFunction
         addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity());
 
         return this;
+    }
+
+    private void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
+        for (JsonNode p :properties) {
+            String propertyKey = p.get("propertyKey").asText();
+            int initialValue = p.get("initialValue").asInt();
+            String topic = p.get("topic").asText();
+            addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, parseField(p.get("initialValue")));
+        }
+        //for (JsonNode p :properties) {
+            //System.out.println(p.get("type"));
+        //String prop = properties.get("propertyKey").asText();
+        //addPhysicalAssetPropertyAndTopic(prop, 0, "sensor/intensity", Integer::parseInt);
+
+        //}
+    }
+
+    /*private <T> Function<String, T> getTopicFunction(JsonNode initialValue)){
+        return Integer::parseInt;
+    }*/
+
+    public <T> Function<String, T> parseField(JsonNode field) {
+        return String -> {
+            if (field instanceof IntNode) {
+                return (T) Integer.valueOf(field.asInt());
+            }
+            return null;//Function.identity();
+            /*return jsonNode -> {
+            if (field != null) {
+                System.out.println("int2");
+
+                if (field instanceof IntNode) {
+                    System.out.println("int3");
+                    return Integer.parseInt(field.asText());
+                } else if (field.isDouble()) {
+                    return Double.parseDouble(field.asText());
+                } else if (field.isBoolean()) {
+                    return Boolean.parseBoolean(field.asText());
+                } else {
+                    return field.asText();
+                }
+            }
+            throw new IllegalArgumentException("Il campo non esiste.");
+        };*/
+        };
     }
 }

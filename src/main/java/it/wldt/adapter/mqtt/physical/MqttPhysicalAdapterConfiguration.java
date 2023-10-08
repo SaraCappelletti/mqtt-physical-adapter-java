@@ -1,5 +1,8 @@
 package it.wldt.adapter.mqtt.physical;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.wldt.adapter.physical.PhysicalAssetAction;
 import it.wldt.adapter.physical.PhysicalAssetDescription;
 import it.wldt.adapter.physical.PhysicalAssetEvent;
@@ -11,6 +14,8 @@ import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class MqttPhysicalAdapterConfiguration {
@@ -23,6 +28,7 @@ public class MqttPhysicalAdapterConfiguration {
     private Integer connectionTimeout = 10;
     private MqttClientPersistence persistence = new MemoryPersistence();
     private boolean automaticReconnectFlag = true;
+    private String filepath;
 
 
     private PhysicalAssetDescription physicalAssetDescription;
@@ -50,8 +56,15 @@ public class MqttPhysicalAdapterConfiguration {
         return new MqttPhysicalAdapterConfigurationBuilder(brokerAddress, brokerPort);
     }
 
-    public static MqttPhysicalAdapterConfigurationBuilder builder(String filename) throws MqttPhysicalAdapterConfigurationException {
-        return new  MqttPhysicalAdapterConfigurationBuilder(filename);
+    public static MqttPhysicalAdapterConfigurationBuilder builder(String filepath) throws MqttPhysicalAdapterConfigurationException {
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = yamlMapper.readTree(new File(filepath));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return new  MqttPhysicalAdapterConfigurationBuilder(jsonNode.get("brokerAddress").asText(), jsonNode.get("brokerPort").asInt());
     }
 
     public String getBrokerAddress() {

@@ -1,0 +1,7 @@
+brokerAddress: "127.0.0.1"
+brokerPort: 1883
+paProperties:
+  - propertyKey: "intensity"
+    topic: "sensor/intensity"
+    type: "int"
+    initialValue: 0

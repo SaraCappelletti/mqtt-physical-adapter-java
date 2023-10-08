@@ -18,18 +18,20 @@ import it.wldt.exception.WldtConfigurationException;
 import it.wldt.exception.WldtRuntimeException;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 public class TestMain {
-    public static void main(String[] args) throws WldtConfigurationException, ModelException, WldtRuntimeException, EventBusException, MqttException, InterruptedException, MqttPhysicalAdapterConfigurationException {
+    public static void main(String[] args) throws WldtConfigurationException, ModelException, WldtRuntimeException, EventBusException, MqttException, InterruptedException, MqttPhysicalAdapterConfigurationException, IOException {
         WldtEngine dt = new WldtEngine(new DefaultShadowingFunction(), "mqtt-digital-twin");
         ConsoleDigitalAdapter dtAdapter = new ConsoleDigitalAdapter();
         dt.addDigitalAdapter(dtAdapter);
 
-        MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder("config.yml")
-                .readFromConfig()
+        String filepath = "src/main/resources/config.yml";
+        MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder(filepath)
+                .readFromConfig(filepath)
                 .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
                 .build();
 
