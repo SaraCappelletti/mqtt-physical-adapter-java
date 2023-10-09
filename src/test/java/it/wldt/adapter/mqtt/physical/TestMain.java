@@ -32,7 +32,7 @@ public class TestMain {
         String filepath = "src/main/resources/config.yml";
         MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder(filepath)
                 .readFromConfig()
-                .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
+                //.addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
                 .build();
 
 //                .addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt)

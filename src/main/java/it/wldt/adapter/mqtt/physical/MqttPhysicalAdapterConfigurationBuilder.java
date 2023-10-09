@@ -196,7 +196,6 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     public <T> Function<String, T> parseField(JsonNode field) {
         return String -> {
             if (field instanceof IntNode) {
-                System.out.println("int");
                 return (T) Integer.valueOf(field.asInt());
             }
             else if (field instanceof DoubleNode) {
@@ -211,7 +210,14 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             else if (field instanceof TextNode) {
                 return (T) String.valueOf(field.asText());
             }
-
+            else if (field instanceof ArrayNode) {
+                ArrayNode arrayNode = (ArrayNode) field;
+                List<T> parsedList = new ArrayList<>();
+                for (JsonNode element : arrayNode) {
+                    parsedList.add((T) parseField(element).apply(element.asText()));
+                }
+                return (T) parsedList;
+            }
             return (T) Function.identity();
         };
     }

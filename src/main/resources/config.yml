@@ -1,7 +1,13 @@
 brokerAddress: "127.0.0.1"
 brokerPort: 1883
 paProperties:
-  - propertyKey: "intensity"
-    topic: "sensor/intensity"
-    type: "boolean"
-    initialValue: 0.0
+  - propertyKey: "last-temperatures"
+    topic: "sensor/state"
+    type: json-array
+    key: "state.last_temperatures"
+    fieldType: int
+    initialValue:
+      - 42
+      - 3.14
+      - Hello
+      - true
