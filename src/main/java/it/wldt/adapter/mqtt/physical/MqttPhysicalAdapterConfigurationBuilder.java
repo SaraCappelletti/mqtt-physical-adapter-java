@@ -199,33 +199,27 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             if (field instanceof IntNode) {
                 return (T) Integer.valueOf(field.asInt());
             }
-            else if (field instanceof TextNode) {
-                return (T) String.valueOf(field.asText());
-            }
-            else if (field instanceof BooleanNode) {
-                return (T) Boolean.valueOf(field.asBoolean());
+            else if (field instanceof DoubleNode) {
+                return (T) Double.valueOf((float) field.asDouble());
             }
             else if (field instanceof FloatNode) {
                 return (T) Float.valueOf((float) field.asDouble());
             }
-                return (T) Function.identity();
-            /*return jsonNode -> {
-            if (field != null) {
-                System.out.println("int2");
-
-                if (field instanceof IntNode) {
-                    System.out.println("int3");
-                    return Integer.parseInt(field.asText());
-                } else if (field.isDouble()) {
-                    return Double.parseDouble(field.asText());
-                } else if (field.isBoolean()) {
-                    return Boolean.parseBoolean(field.asText());
-                } else {
-                    return field.asText();
-                }
+            else if (field instanceof BooleanNode) {
+                return (T) Boolean.valueOf(field.asBoolean());
             }
-            throw new IllegalArgumentException("Il campo non esiste.");
-        };*/
+            else if (field instanceof TextNode) {
+                return (T) String.valueOf(field.asText());
+            }
+            else if (field instanceof ArrayNode) {
+                ArrayNode arrayNode = (ArrayNode) field;
+                List<T> parsedList = new ArrayList<>();
+                for (JsonNode element : arrayNode) {
+                    parsedList.add((T) parseField(element).apply(element.asText()));
+                }
+                return (T) parsedList;
+            }
+            return (T) Function.identity();
         };
     }
 
