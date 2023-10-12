@@ -1,12 +1,11 @@
 brokerAddress: "127.0.0.1"
 brokerPort: 1883
 paProperties:
-  - propertyKey: "last-temperatures"
+  - propertyKey: "state"
     topic: "sensor/state"
-    type: "json-array"
-    key: "state.last_temperatures"
+    type: "json-object"
+    key: [ "state.temperature", "state.humidity" ]
     field-type:
-      - "int"
-    initialValue:
-      - 42
-      - 5
+    - "int"
+    - "double"
+    initialValue: {"state.temperature": 0, "state.humidity": 4.3 }

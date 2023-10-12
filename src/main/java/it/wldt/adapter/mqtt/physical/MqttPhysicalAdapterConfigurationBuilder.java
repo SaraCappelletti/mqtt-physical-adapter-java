@@ -223,44 +223,64 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             addPhysicalAssetPropertyAndTopic(propertyKey, String.valueOf(initialValue), topic, s -> String.valueOf(s));
         }
         else if ("json-array".equals(type)) {
+            addJsonProperty(p, propertyKey, initialValue, topic);
+        }
+        else if ("json-object".equals(type)) {
             ObjectMapper objectMapper = new ObjectMapper();
-            String fieldType = p.get("field-type").asText();
-            JsonNode initialValuesArray = null;
+            ObjectNode initialValuesObject = objectMapper.createObjectNode();
             try {
-                initialValuesArray = objectMapper.readTree(initialValue);
+                initialValuesObject = objectMapper.readValue(initialValue, ObjectNode.class);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            addPhysicalAssetPropertyAndTopic(propertyKey, (ArrayNode) initialValuesArray, topic, s -> {
-                TypeFactory typeFactory = objectMapper.getTypeFactory();
+            addPhysicalAssetPropertyAndTopic(propertyKey, initialValuesObject, topic, s -> {
+                ObjectNode parsedValues = objectMapper.createObjectNode();
                 try {
-                    List<JsonNode> values = objectMapper.readValue(s, typeFactory
-                            .constructCollectionType(List.class, JsonNode.class));
-                    //new ObjectMapper().readTree(s);
-                    //ArrayNode arrayNode = (ArrayNode) s;
-                    ArrayNode parsedList = objectMapper.createArrayNode();
-                    for (JsonNode element : values) {
-                        if ("int".equals(fieldType)) {
-                            parsedList.add(Integer.valueOf(element.asText()));
-                        } else if ("double".equals(fieldType) || "float".equals(fieldType)) {
-                            parsedList.add(Double.valueOf(element.asText()));
-                        } else if ("boolean".equals(fieldType)) {
-                            parsedList.add(Boolean.valueOf(element.asText()));
-                        } else if ("string".equals(fieldType)) {
-                            parsedList.add(String.valueOf(element.asText()));
-                        } else {
-                            parsedList.add(element);
-                        }
-                    }
-                    return parsedList;
-                } catch (JsonProcessingException e){
+                    parsedValues = objectMapper.readValue(s, ObjectNode.class);
+                } catch (Exception e) {
                     e.printStackTrace();
-                    return null;
                 }
+                return parsedValues;
             });
         }
         else {
             addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, s -> Function.identity());
         }
+    }
+
+    private void addJsonProperty(JsonNode p, String propertyKey, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String fieldType = p.get("field-type").asText();
+        JsonNode initialValuesArray = null;
+        try {
+            initialValuesArray = objectMapper.readTree(initialValue);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        addPhysicalAssetPropertyAndTopic(propertyKey, (ArrayNode) initialValuesArray, topic, s -> {
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+            try {
+                List<JsonNode> values = objectMapper.readValue(s, typeFactory
+                        .constructCollectionType(List.class, JsonNode.class));
+                ArrayNode parsedList = objectMapper.createArrayNode();
+                for (JsonNode element : values) {
+                    if ("int".equals(fieldType)) {
+                        parsedList.add(Integer.valueOf(element.asText()));
+                    } else if ("double".equals(fieldType) || "float".equals(fieldType)) {
+                        parsedList.add(Double.valueOf(element.asText()));
+                    } else if ("boolean".equals(fieldType)) {
+                        parsedList.add(Boolean.valueOf(element.asText()));
+                    } else if ("string".equals(fieldType)) {
+                        parsedList.add(String.valueOf(element.asText()));
+                    } else {
+                        parsedList.add(element);
+                    }
+                }
+                return parsedList;
+            } catch (JsonProcessingException e){
+                e.printStackTrace();
+                return null;
+            }
+        });
     }
 }
