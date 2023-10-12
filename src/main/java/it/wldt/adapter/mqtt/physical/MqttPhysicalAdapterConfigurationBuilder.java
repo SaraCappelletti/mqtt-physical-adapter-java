@@ -179,14 +179,16 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException, IOException {
         JsonNode properties = configFileContent.get("paProperties");
         JsonNode actions = configFileContent.get("paActions");
+        JsonNode events = configFileContent.get("paEvents");
         for (JsonNode p :properties) {
             addTopic(p);
         }
         for (JsonNode a :actions) {
             addAction(a);
         }
-        //addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
-        addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity());
+        for (JsonNode e :events) {
+            addEvent(e);
+        }
 
         return this;
     }
@@ -279,6 +281,16 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         String topic = action.get("topic").asText();
         String actionWord = action.get("action").asText();
         addPhysicalAssetActionAndTopic(actionKey, type, contentType, topic, actionBody -> actionWord + actionBody);
+
+    }
+
+    private void addEvent(JsonNode event) throws MqttPhysicalAdapterConfigurationException {
+        // TODO CHECK HOW TYPE WORKS WITH EVENTS
+        //  here the type is "text/plain"
+        String eventKey = event.get("eventKey").asText();
+        String type = event.get("type").asText();
+        String topic = event.get("topic").asText();
+        addPhysicalAssetEventAndTopic(eventKey, type, topic, Function.identity());
 
     }
 

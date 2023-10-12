@@ -12,3 +12,7 @@ paActions:
     contentType: "text/plain"
     topic: "sensor/actions/switch"
     action: "switch"
+paEvents:
+  - eventKey: "overheating"
+    type: "text/plain"
+    topic: "sensor/overheating"
