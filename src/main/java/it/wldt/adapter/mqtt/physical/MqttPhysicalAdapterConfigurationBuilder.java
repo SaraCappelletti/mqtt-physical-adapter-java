@@ -177,21 +177,17 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     }
 
     public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException, IOException {
-        addProperties(configFileContent.get("paProperties"));
-
+        JsonNode properties = configFileContent.get("paProperties");
+        for (JsonNode p :properties) {
+            addTopic(p);
+        }
         addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody);
         //addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
-        //String propertyKey, T initialValue, String topic, Function<String, T> topicFunction
         addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity());
 
         return this;
     }
 
-    private <T> void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
-        for (JsonNode p :properties) {
-            addTopic(p);
-        }
-    }
 
     private void addTopic(JsonNode p) throws MqttPhysicalAdapterConfigurationException {
         String propertyKey = p.get("propertyKey").asText();
