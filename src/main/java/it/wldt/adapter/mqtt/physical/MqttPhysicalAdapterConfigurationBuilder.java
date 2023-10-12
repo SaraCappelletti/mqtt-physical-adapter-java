@@ -1,9 +1,13 @@
 package it.wldt.adapter.mqtt.physical;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.*;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.adapter.mqtt.physical.topic.MqttTopic;
 import it.wldt.adapter.mqtt.physical.topic.incoming.DigitalTwinIncomingTopic;
@@ -186,40 +190,77 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     private <T> void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
         for (JsonNode p :properties) {
             String propertyKey = p.get("propertyKey").asText();
-            T initialValue = (T) parseField(p.get("initialValue")).apply(p.get("initialValue").asText());
+            String type = p.get("type").asText();
+            T initialValue = null;
+            /*if("json-array".equals(type)){
+                initialValue = getInitialValuesArray(p);
+            } else{
+                initialValue = (T) parseField(p, type).apply(p.get("initialValue").asText());
+            }*/
+            //System.out.println(parseField(p.get("initialValue"), type));
+            //System.out.println(parseField(p.get("initialValue"), type).apply(p.get("initialValue").asText()));
             String topic = p.get("topic").asText();
-            //TODO i'm ignoring type field
-            addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, parseField(p.get("initialValue")));
+            addTopic(p);
         }
     }
 
-    public <T> Function<String, T> parseField(JsonNode field) {
-        return String -> {
-            if (field instanceof IntNode) {
-                return (T) Integer.valueOf(field.asInt());
-            }
-            else if (field instanceof DoubleNode) {
-                return (T) Double.valueOf((float) field.asDouble());
-            }
-            else if (field instanceof FloatNode) {
-                return (T) Float.valueOf((float) field.asDouble());
-            }
-            else if (field instanceof BooleanNode) {
-                return (T) Boolean.valueOf(field.asBoolean());
-            }
-            else if (field instanceof TextNode) {
-                return (T) String.valueOf(field.asText());
-            }
-            else if (field instanceof ArrayNode) {
-                ArrayNode arrayNode = (ArrayNode) field;
-                List<T> parsedList = new ArrayList<>();
-                for (JsonNode element : arrayNode) {
-                    parsedList.add((T) parseField(element).apply(element.asText()));
-                }
-                return (T) parsedList;
-            }
-            return (T) Function.identity();
-        };
-    }
+    private void addTopic(JsonNode p) throws MqttPhysicalAdapterConfigurationException {
+        String propertyKey = p.get("propertyKey").asText();
+        String topic = p.get("topic").asText();
+        String type = p.get("type").asText();
+        String initialValue = p.get("initialValue").toString();
 
+        if ("int".equals(type)) {
+            addPhysicalAssetPropertyAndTopic(propertyKey, Integer.valueOf(initialValue), topic, s -> Integer.valueOf(s));
+        }
+        else if ("double".equals(type) || "float".equals(type)) {
+            addPhysicalAssetPropertyAndTopic(propertyKey, Double.valueOf(initialValue), topic, s -> Double.valueOf(s));
+        }
+        else if ("boolean".equals(type)) {
+            addPhysicalAssetPropertyAndTopic(propertyKey, Boolean.valueOf(initialValue), topic, s -> Boolean.valueOf(s));
+        }
+        else if ("string".equals(type)) {
+            addPhysicalAssetPropertyAndTopic(propertyKey, String.valueOf(initialValue), topic, s -> String.valueOf(s));
+        }
+        else if ("json-array".equals(type)) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String fieldType = p.get("field-type").asText();
+            JsonNode initialValuesArray = null;
+            try {
+                initialValuesArray = objectMapper.readTree(initialValue);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            addPhysicalAssetPropertyAndTopic(propertyKey, (ArrayNode) initialValuesArray, topic, s -> {
+                TypeFactory typeFactory = objectMapper.getTypeFactory();
+                try {
+                    List<JsonNode> values = objectMapper.readValue(s, typeFactory
+                            .constructCollectionType(List.class, JsonNode.class));
+                    //new ObjectMapper().readTree(s);
+                    //ArrayNode arrayNode = (ArrayNode) s;
+                    ArrayNode parsedList = objectMapper.createArrayNode();
+                    for (JsonNode element : values) {
+                        if ("int".equals(fieldType)) {
+                            parsedList.add(Integer.valueOf(element.asText()));
+                        } else if ("double".equals(fieldType) || "float".equals(fieldType)) {
+                            parsedList.add(Double.valueOf(element.asText()));
+                        } else if ("boolean".equals(fieldType)) {
+                            parsedList.add(Boolean.valueOf(element.asText()));
+                        } else if ("string".equals(fieldType)) {
+                            parsedList.add(String.valueOf(element.asText()));
+                        } else {
+                            parsedList.add(element);
+                        }
+                    }
+                    return parsedList;
+                } catch (JsonProcessingException e){
+                    e.printStackTrace();
+                    return null;
+                }
+            });
+        }
+        else {
+            addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, s -> Function.identity());
+        }
+    }
 }
