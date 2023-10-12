@@ -189,17 +189,6 @@ public class MqttPhysicalAdapterConfigurationBuilder {
 
     private <T> void addProperties(JsonNode properties) throws MqttPhysicalAdapterConfigurationException {
         for (JsonNode p :properties) {
-            String propertyKey = p.get("propertyKey").asText();
-            String type = p.get("type").asText();
-            T initialValue = null;
-            /*if("json-array".equals(type)){
-                initialValue = getInitialValuesArray(p);
-            } else{
-                initialValue = (T) parseField(p, type).apply(p.get("initialValue").asText());
-            }*/
-            //System.out.println(parseField(p.get("initialValue"), type));
-            //System.out.println(parseField(p.get("initialValue"), type).apply(p.get("initialValue").asText()));
-            String topic = p.get("topic").asText();
             addTopic(p);
         }
     }
@@ -223,34 +212,15 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             addPhysicalAssetPropertyAndTopic(propertyKey, String.valueOf(initialValue), topic, s -> String.valueOf(s));
         }
         else if ("json-array".equals(type)) {
-            addJsonProperty(p, propertyKey, initialValue, topic);
+            addJsonArrayProperty(p.get("field-type").asText(), propertyKey, initialValue, topic);
         }
         else if ("json-object".equals(type)) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode initialValuesObject = objectMapper.createObjectNode();
-            try {
-                initialValuesObject = objectMapper.readValue(initialValue, ObjectNode.class);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            addPhysicalAssetPropertyAndTopic(propertyKey, initialValuesObject, topic, s -> {
-                ObjectNode parsedValues = objectMapper.createObjectNode();
-                try {
-                    parsedValues = objectMapper.readValue(s, ObjectNode.class);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return parsedValues;
-            });
-        }
-        else {
-            addPhysicalAssetPropertyAndTopic(propertyKey, initialValue, topic, s -> Function.identity());
+            addJsonObjectProperty(propertyKey, initialValue, topic);
         }
     }
 
-    private void addJsonProperty(JsonNode p, String propertyKey, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
+    private void addJsonArrayProperty(String fieldType, String propertyKey, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
         ObjectMapper objectMapper = new ObjectMapper();
-        String fieldType = p.get("field-type").asText();
         JsonNode initialValuesArray = null;
         try {
             initialValuesArray = objectMapper.readTree(initialValue);
@@ -281,6 +251,25 @@ public class MqttPhysicalAdapterConfigurationBuilder {
                 e.printStackTrace();
                 return null;
             }
+        });
+    }
+
+    private void addJsonObjectProperty(String propertyKey, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode initialValuesObject = objectMapper.createObjectNode();
+        try {
+            initialValuesObject = objectMapper.readValue(initialValue, ObjectNode.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        addPhysicalAssetPropertyAndTopic(propertyKey, initialValuesObject, topic, s -> {
+            ObjectNode parsedValues = objectMapper.createObjectNode();
+            try {
+                parsedValues = objectMapper.readValue(s, ObjectNode.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return parsedValues;
         });
     }
 }

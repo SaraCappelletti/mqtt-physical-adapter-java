@@ -9,4 +9,4 @@ Requires an external MQTT broker to subscribe to.
 
 _// TODO_
 When writing the config file in the field type the following strings are accepted:
-int, double, float, boolean (defaultValue: true/false), string, json-array
+int, double, float, boolean (defaultValue: true/false), string, json-array, json-object
