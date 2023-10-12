@@ -178,10 +178,13 @@ public class MqttPhysicalAdapterConfigurationBuilder {
 
     public MqttPhysicalAdapterConfigurationBuilder readFromConfig() throws MqttPhysicalAdapterConfigurationException, IOException {
         JsonNode properties = configFileContent.get("paProperties");
+        JsonNode actions = configFileContent.get("paActions");
         for (JsonNode p :properties) {
             addTopic(p);
         }
-        addPhysicalAssetActionAndTopic("switch-off", "sensor.actuation", "text/plain", "sensor/actions/switch", actionBody -> "switch" + actionBody);
+        for (JsonNode a :actions) {
+            addAction(a);
+        }
         //addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt);
         addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity());
 
@@ -268,4 +271,15 @@ public class MqttPhysicalAdapterConfigurationBuilder {
             return parsedValues;
         });
     }
+
+    private void addAction(JsonNode action) throws MqttPhysicalAdapterConfigurationException {
+        String actionKey = action.get("actionKey").asText();
+        String type = action.get("type").asText();
+        String contentType = action.get("contentType").asText();
+        String topic = action.get("topic").asText();
+        String actionWord = action.get("action").asText();
+        addPhysicalAssetActionAndTopic(actionKey, type, contentType, topic, actionBody -> actionWord + actionBody);
+
+    }
+
 }

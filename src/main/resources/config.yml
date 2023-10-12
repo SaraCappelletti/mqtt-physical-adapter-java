@@ -1,11 +1,14 @@
 brokerAddress: "127.0.0.1"
 brokerPort: 1883
 paProperties:
-  - propertyKey: "state"
-    topic: "sensor/state"
-    type: "json-object"
-    key: [ "state.temperature", "state.humidity" ]
-    field-type:
-    - "int"
-    - "double"
-    initialValue: {"state.temperature": 0, "state.humidity": 4.3 }
+  - propertyKey: "intensity"
+    topic: "sensor/intensity"
+    type: "int"
+    field-type: "int"
+    initialValue: 0
+paActions:
+  - actionKey: "switch-off"
+    type: "sensor.actuation"
+    contentType: "text/plain"
+    topic: "sensor/actions/switch"
+    action: "switch"
