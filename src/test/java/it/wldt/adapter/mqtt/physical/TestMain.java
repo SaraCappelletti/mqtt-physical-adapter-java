@@ -28,15 +28,17 @@ public class TestMain {
         WldtEngine dt = new WldtEngine(new DefaultShadowingFunction(), "mqtt-digital-twin");
         ConsoleDigitalAdapter dtAdapter = new ConsoleDigitalAdapter();
         dt.addDigitalAdapter(dtAdapter);
-
+        //esempio di messaggi
+        //mosquitto_pub -t "device/switch" -m "ON" -h localhost -p 1883
+        //mosquitto_pub -t "sensor/overheating" -m "OVERHEATING" -h localhost -p 1883
+        //mosquitto_pub -t "sensor/intensity" -m "[2, 3]" -h localhost -p 1883
         String filepath = "src/main/resources/config.yml";
         MqttPhysicalAdapterConfiguration config = MqttPhysicalAdapterConfiguration.builder(filepath)
                 .readFromConfig()
-                //.addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
                 .build();
 
 //                .addPhysicalAssetPropertyAndTopic("intensity", 0, "sensor/intensity", Integer::parseInt)
-//                .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()))
+//                .addIncomingTopic(new DigitalTwinIncomingTopic("sensor/state", getSensorStateFunction()), createIncomingTopicRelatedPropertyList(), new ArrayList<>())
 //                .addPhysicalAssetProperty("temperature", 0)
 //                .addPhysicalAssetProperty("humidity", 0)
 //                .addPhysicalAssetEventAndTopic("overheating", "text/plain", "sensor/overheating", Function.identity())
