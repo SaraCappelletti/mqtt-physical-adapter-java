@@ -181,7 +181,7 @@ public class MqttPhysicalAdapterConfigurationBuilder {
         JsonNode actions = configFileContent.get("paActions");
         JsonNode events = configFileContent.get("paEvents");
         for (JsonNode p :properties) {
-            addTopic(p);
+            addProperty(p);
         }
         for (JsonNode a :actions) {
             addAction(a);
@@ -194,7 +194,7 @@ public class MqttPhysicalAdapterConfigurationBuilder {
     }
 
 
-    private void addTopic(JsonNode p) throws MqttPhysicalAdapterConfigurationException {
+    private void addProperty(JsonNode p) throws MqttPhysicalAdapterConfigurationException {
         String propertyKey = p.get("propertyKey").asText();
         String topic = p.get("topic").asText();
         String type = p.get("type").asText();
@@ -284,14 +284,73 @@ public class MqttPhysicalAdapterConfigurationBuilder {
 
     }
 
-    private void addEvent(JsonNode event) throws MqttPhysicalAdapterConfigurationException {
-        // TODO CHECK HOW TYPE WORKS WITH EVENTS
-        //  here the type is "text/plain"
-        String eventKey = event.get("eventKey").asText();
-        String type = event.get("type").asText();
-        String topic = event.get("topic").asText();
-        addPhysicalAssetEventAndTopic(eventKey, type, topic, Function.identity());
+    private void addEvent(JsonNode e) throws MqttPhysicalAdapterConfigurationException {
 
+        String eventKey = e.get("eventKey").asText();
+        String type = e.get("type").asText();
+        String topic = e.get("topic").asText();
+        addPhysicalAssetEventAndTopic(eventKey, type, topic, Function.identity());
     }
+        /*if ("int".equals(type)) {
+            addPhysicalAssetEventAndTopic(eventKey, type, topic, s -> Integer.valueOf(s));
+        }
+        else if ("double".equals(type) || "float".equals(type)) {
+            addPhysicalAssetEventAndTopic(eventKey, type, topic, s -> Double.valueOf(s));
+        }
+        else if ("boolean".equals(type)) {
+            addPhysicalAssetEventAndTopic(eventKey, type, topic, s -> Boolean.valueOf(s));
+        }
+        else if ("string".equals(type)) {
+            addPhysicalAssetEventAndTopic(eventKey, type, topic, s -> String.valueOf(s));
+        }
+        else if ("json-array".equals(type)) {
+            addJsonArrayEvent(e.get("field-type").asText(), eventKey, topic);
+        }
+        else if ("json-object".equals(type)) {
+            addJsonObjectEvent(eventKey, topic);
+        }
+    }
+
+    private void addJsonArrayEvent(String fieldType, String eventKey, String topic) throws MqttPhysicalAdapterConfigurationException {
+        addPhysicalAssetEventAndTopic(eventKey, "json-array", topic, s -> {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+            try {
+                List<JsonNode> values = objectMapper.readValue(s, typeFactory
+                        .constructCollectionType(List.class, JsonNode.class));
+                ArrayNode parsedList = objectMapper.createArrayNode();
+                for (JsonNode element : values) {
+                    if ("int".equals(fieldType)) {
+                        parsedList.add(Integer.valueOf(element.asText()));
+                    } else if ("double".equals(fieldType) || "float".equals(fieldType)) {
+                        parsedList.add(Double.valueOf(element.asText()));
+                    } else if ("boolean".equals(fieldType)) {
+                        parsedList.add(Boolean.valueOf(element.asText()));
+                    } else if ("string".equals(fieldType)) {
+                        parsedList.add(String.valueOf(element.asText()));
+                    } else {
+                        parsedList.add(element);
+                    }
+                }
+                return parsedList;
+            } catch (JsonProcessingException e){
+                e.printStackTrace();
+                return null;
+            }
+        });
+    }
+
+    private void addJsonObjectEvent(String eventKey, String topic) throws MqttPhysicalAdapterConfigurationException {
+        addPhysicalAssetEventAndTopic(eventKey, "json-object", topic, s -> {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode parsedValues = objectMapper.createObjectNode();
+            try {
+                parsedValues = objectMapper.readValue(s, ObjectNode.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return parsedValues;
+        });
+    }*/
 
 }

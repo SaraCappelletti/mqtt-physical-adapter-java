@@ -3,9 +3,15 @@ brokerPort: 1883
 paProperties:
   - propertyKey: "intensity"
     topic: "sensor/intensity"
-    type: "int"
+    type: "json-array"
     field-type: "int"
-    initialValue: 0
+    initialValue:
+    - 0
+    - 4
+  - propertyKey: "switch"
+    topic: "device/switch"
+    type: "string"
+    initialValue: "OFF"
 paActions:
   - actionKey: "switch-off"
     type: "sensor.actuation"
