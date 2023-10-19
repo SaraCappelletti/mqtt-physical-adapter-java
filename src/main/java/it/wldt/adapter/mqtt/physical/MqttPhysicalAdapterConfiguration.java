@@ -28,7 +28,6 @@ public class MqttPhysicalAdapterConfiguration {
     private Integer connectionTimeout = 10;
     private MqttClientPersistence persistence = new MemoryPersistence();
     private boolean automaticReconnectFlag = true;
-    private String filepath;
 
 
     private PhysicalAssetDescription physicalAssetDescription;
